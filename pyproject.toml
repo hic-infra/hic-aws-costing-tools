@@ -13,11 +13,11 @@ authors = [
 description = "HIC AWS costing tools"
 readme = "README.md"
 requires-python = ">=3.7"
-license = {text = "BSD-3-Clause"}
+license = {text = "MIT"}
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: System Administrators",
-  "License :: OSI Approved :: BSD License",
+  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
 ]
