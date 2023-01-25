@@ -1,0 +1,19 @@
+{
+  "DimensionValues": [
+    {
+      "Attributes": {
+        "description": "researchers-1"
+      },
+      "Value": "000000000001"
+    },
+    {
+      "Attributes": {
+        "description": "researchers-2"
+      },
+      "Value": "000000000002"
+    }
+  ],
+  "ResponseMetadata": {},
+  "ReturnSize": 2,
+  "TotalSize": 2
+}

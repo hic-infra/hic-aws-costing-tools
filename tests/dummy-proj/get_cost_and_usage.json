@@ -1,0 +1,139 @@
+{
+  "DimensionValueAttributes": [
+    {
+      "Attributes": {
+        "description": "researchers-1"
+      },
+      "Value": "000000000001"
+    },
+    {
+      "Attributes": {
+        "description": "researchers-2"
+      },
+      "Value": "000000000002"
+    }
+  ],
+  "GroupDefinitions": [
+    {
+      "Key": "LINKED_ACCOUNT",
+      "Type": "DIMENSION"
+    },
+    {
+      "Key": "Proj",
+      "Type": "TAG"
+    }
+  ],
+  "ResponseMetadata": {},
+  "ResultsByTime": [
+    {
+      "Estimated": false,
+      "Groups": [
+        {
+          "Keys": ["000000000001", "Proj$"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "14.1207919066",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000001", "Proj$researcher-hal9001-2"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "1.4616",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000001", "Proj$researcher-hal9001-3"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "4.08",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000002", "Proj$"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "6.860591004",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000002", "Proj$Whatever"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "14.3488340425",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2022-04-05",
+        "Start": "2022-04-04"
+      },
+      "Total": {}
+    },
+    {
+      "Estimated": false,
+      "Groups": [
+        {
+          "Keys": ["000000000001", "Proj$"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "13.9372985308",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000001", "Proj$researcher-hal9001-2"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "1.4616",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000001", "Proj$researcher-hal9001-3"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "4.08",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000002", "Proj$"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "6.878866004",
+              "Unit": "USD"
+            }
+          }
+        },
+        {
+          "Keys": ["000000000002", "Proj$Whatever"],
+          "Metrics": {
+            "UnblendedCost": {
+              "Amount": "18.124845442",
+              "Unit": "USD"
+            }
+          }
+        }
+      ],
+      "TimePeriod": {
+        "End": "2022-04-06",
+        "Start": "2022-04-05"
+      },
+      "Total": {}
+    }
+  ]
+}

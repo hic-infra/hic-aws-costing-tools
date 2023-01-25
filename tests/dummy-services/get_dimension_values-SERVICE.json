@@ -1,0 +1,135 @@
+{
+  "DimensionValues": [
+    {
+      "Attributes": {},
+      "Value": "AWS CloudTrail"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Config"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Cost Explorer"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Data Transfer"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Glue"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Key Management Service"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Lambda"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Network Firewall"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Secrets Manager"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Service Catalog"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS Step Functions"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS WAF"
+    },
+    {
+      "Attributes": {},
+      "Value": "AWS X-Ray"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon API Gateway"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon AppStream"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon CloudFront"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Cognito"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon DynamoDB"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon EC2 Container Registry (ECR)"
+    },
+    {
+      "Attributes": {},
+      "Value": "EC2 - Other"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Elastic Compute Cloud - Compute"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Elastic Load Balancing"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Quantum Ledger Database"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Relational Database Service"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Route 53"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon S3 Glacier Deep Archive"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Simple Notification Service"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Simple Queue Service"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Simple Storage Service"
+    },
+    {
+      "Attributes": {},
+      "Value": "Amazon Virtual Private Cloud"
+    },
+    {
+      "Attributes": {},
+      "Value": "AmazonCloudWatch"
+    },
+    {
+      "Attributes": {},
+      "Value": "CloudWatch Events"
+    }
+  ],
+  "ResponseMetadata": {},
+  "ReturnSize": 32,
+  "TotalSize": 32
+}
