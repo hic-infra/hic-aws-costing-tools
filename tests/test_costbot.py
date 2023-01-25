@@ -1,8 +1,10 @@
-from datetime import datetime
 import json
-from msteams_costbot import app
 import os.path
+from datetime import datetime
+
 import pytest
+
+from hic_aws_costing_tools import aws_costs
 
 
 def get_test_data(scenario, method, format="json"):
@@ -58,7 +60,7 @@ def test_costs_for_regions(mocker, scenario):
 
     mocker.patch("boto3.client", return_value=client_mock)
 
-    results, all_linked_accounts, all_services_or_tags = app.costs_for_regions(
+    results, all_linked_accounts, all_services_or_tags = aws_costs.costs_for_regions(
         time_period=time_period,
         granularity="DAILY",
         regions=None,
@@ -103,7 +105,7 @@ def test_costs_to_table(scenario):
 
     results = get_test_data(scenario, "get_cost_and_usage")["ResultsByTime"]
 
-    header, costs = app.costs_to_table(
+    header, costs = aws_costs.costs_to_table(
         results=results,
         accounts=accounts,
         services_or_tags=services_or_tags,
@@ -122,7 +124,7 @@ def test_sum_cost_table_over_accounts(scenario):
     costs = test_data["costs"]
     expected_sum = test_data["account_sum"]
 
-    sum = app.sum_cost_table_over_accounts(header, costs)
+    sum = aws_costs.sum_cost_table_over_accounts(header, costs)
     assert_2d_costs_equal(expected_sum, sum, 4)
 
 
@@ -131,9 +133,9 @@ def test_format_message_summarise(scenario):
     test_data = get_test_data(scenario, "test-costs_to_table")
     header = test_data["header"]
     costs = test_data["costs"]
-    expected_output = get_test_data(scenario, f"test-format_message_summarise", "md")
+    expected_output = get_test_data(scenario, "test-format_message_summarise", "md")
 
-    m = app.format_message_summarise(header, costs)
+    m = aws_costs.format_message_summarise(header, costs)
     assert m == expected_output
 
 
@@ -147,17 +149,13 @@ def test_format_message_all(scenario, combine_accounts):
         scenario, f"test-format_message_all-{combine_accounts}", "md"
     )
 
-    m = app.format_message_all(
+    m = aws_costs.format_message_all(
         header=header,
         costs=costs,
         service_or_tag="Proj",
         combine_accounts=combine_accounts,
     )
     assert m == expected_output
-
-
-# def send_teams(*, message, title, webhook):
-# def create_costs_message(
 
 
 @pytest.mark.parametrize(
@@ -170,7 +168,7 @@ def test_format_message_all(scenario, combine_accounts):
     ],
 )
 def test_get_time_period(startdate, days, enddate, expected_start, expected_end):
-    assert app.get_time_period(startdate, days, enddate) == {
+    assert aws_costs.get_time_period(startdate, days, enddate) == {
         "Start": expected_start,
         "End": expected_end,
     }
@@ -179,12 +177,8 @@ def test_get_time_period(startdate, days, enddate, expected_start, expected_end)
 def test_get_time_period_now(mocker):
     datetime_mock = mocker.Mock()
     datetime_mock.now.return_value = datetime(2012, 5, 3, 9, 56, 22)
-    mocker.patch("msteams_costbot.app.datetime", datetime_mock)
-    assert app.get_time_period(None, 1, None) == {
+    mocker.patch("hic_aws_costing_tools.aws_costs.datetime", datetime_mock)
+    assert aws_costs.get_time_period(None, 1, None) == {
         "Start": "2012-05-02",
         "End": "2012-05-03",
     }
-
-
-# def lambda_handler(event, context):
-# def main(args):

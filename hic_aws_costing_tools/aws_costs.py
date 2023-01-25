@@ -1,17 +1,10 @@
-#!/usr/bin/env python
-
-from argparse import ArgumentParser
-import boto3
 import csv
-from io import StringIO
-import json
-import os
-import sys
-from urllib import request
 from datetime import datetime, timedelta
+from io import StringIO
 
+import boto3
 
-COST_TYPE = "UnblendedCost"
+DEFAULT_COST_TYPE = "UnblendedCost"
 DEFAULT_GRANULARITY = "DAILY"
 DEFAULT_EXCLUDE_RECORD_TYPES = ["Credit", "Refund", "Tax"]
 EXPECTED_UNIT = "USD"
@@ -107,7 +100,10 @@ def costs_to_table(*, results, accounts, services_or_tags, cost_type):
         acc_svc_map = {}
         for g in result["Groups"]:
             # [account, service-or-tag]
-            assert g["Metrics"][cost_type]["Unit"] == EXPECTED_UNIT
+            if g["Metrics"][cost_type]["Unit"] != EXPECTED_UNIT:
+                raise RuntimeError(
+                    f"Unexpected unit: {g['Metrics'][cost_type]['Unit']}"
+                )
             acc_svc_map[tuple(g["Keys"])] = g["Metrics"][cost_type]["Amount"]
 
         for acc_i, acc in enumerate(sorted(accounts.keys())):
@@ -137,9 +133,13 @@ def sum_cost_table_over_accounts(header, costs):
     return [costs_sum]
 
 
+def _assert_header(header):
+    if header[1] != "ACCOUNT_NAME" or header[-1] != "TOTAL":
+        raise RuntimeError(f"Unexpected header: {header}")
+
+
 def format_message_summarise(header, costs):
-    assert header[1] == "ACCOUNT_NAME"
-    assert header[-1] == "TOTAL"
+    _assert_header(header)
     costs_dsc = sorted(costs, key=lambda r: r[-1], reverse=True)
 
     sum_total = 0
@@ -155,8 +155,7 @@ def format_message_summarise(header, costs):
 
 
 def format_message_all(header, costs, service_or_tag, combine_accounts):
-    assert header[1] == "ACCOUNT_NAME"
-    assert header[-1] == "TOTAL"
+    _assert_header(header)
 
     if combine_accounts:
         costs_acc = sum_cost_table_over_accounts(header, costs)
@@ -172,24 +171,6 @@ def format_message_all(header, costs, service_or_tag, combine_accounts):
             m += f"|{service_or_tag}|{cost:.2f}|\n"
         m += "\n"
     return m
-
-
-def send_teams(*, message, title, webhook):
-    data = {
-        #   "@context": "https://schema.org/extensions",
-        #   "@type": "MessageCard",
-        #   "themeColor": "green",
-        "title": title,
-        "testformat": "markdown",
-        "text": message,
-    }
-    headers = {"Content-Type": "application/json"}
-    bindata = json.dumps(data).encode("utf-8")
-    req = request.Request(webhook, bindata, headers)
-    resp = request.urlopen(req)
-    if resp.status != 200:
-        print(resp.reason)
-        raise Exception(f"Failed to send message to Teams: {resp.reason}")
 
 
 def costs_to_csv(header, costs):
@@ -299,101 +280,3 @@ def get_time_period(startdate=None, duration_days=1, enddate=None):
             enddate = datetime.now().date()
         startdate = enddate - timedelta(days=duration_days)
     return {"Start": startdate.isoformat(), "End": enddate.isoformat()}
-
-
-def lambda_handler(event, context):
-    # Either set a webhook, or a parameter store path containing the webhook
-    webhook = os.getenv("MS_TEAMS_WEBHOOK")
-    if not webhook:
-        ms_teams_parameter_store = os.getenv("MS_TEAMS_PARAMETER_STORE")
-        if not ms_teams_parameter_store:
-            raise Exception("MS_TEAMS_WEBHOOK or MS_TEAMS_PARAMETER_STORE must be set")
-        ssm = boto3.client("ssm")
-        webhook = ssm.get_parameter(Name=ms_teams_parameter_store, WithDecryption=True)[
-            "Parameter"
-        ]["Value"]
-
-    if "start" in event:
-        time_period = get_time_period(event["start"], 1)
-    else:
-        time_period = get_time_period(None, 1)
-    if "tag" in event:
-        service_or_tag = event["tag"]
-    else:
-        service_or_tag = None
-    cost_explorer_role_arn = os.getenv("COST_EXPLORER_ROLE_ARN")
-    title_prefix = os.getenv("MS_TEAMS_TITLE_PREFIX")
-    granularity = DEFAULT_GRANULARITY
-
-    message, title = create_costs_message(
-        role_arn=cost_explorer_role_arn,
-        time_period=time_period,
-        cost_type=COST_TYPE,
-        granularity=granularity,
-        regions=None,
-        title_prefix=title_prefix,
-        service_or_tag=service_or_tag,
-        exclude_types=DEFAULT_EXCLUDE_RECORD_TYPES,
-        message_mode="auto",
-    )
-    send_teams(
-        message=message,
-        title=title,
-        webhook=webhook,
-    )
-    return {"statusCode": 200, "body": json.dumps(message)}
-
-
-def main(args):
-    parser = ArgumentParser()
-    parser.add_argument(
-        "--start", help="Start date (YYYY-MM-DD, inclusive) (default yesterday)"
-    )
-    parser.add_argument(
-        "--end", help="End date (YYYY-MM-DD, exclusive) (default start+1 day)"
-    )
-    parser.add_argument(
-        "--tag", help="Group by this tag instead of service (default service)"
-    )
-    parser.add_argument(
-        "--assume-role", help="Optionally assume this role ARN to query Cost Explorer"
-    )
-    parser.add_argument(
-        "--granularity",
-        choices=["monthly", "daily"],
-        default=DEFAULT_GRANULARITY.lower(),
-        help="Fetch costs monthly or daily",
-    )
-    parser.add_argument(
-        "--exclude-types",
-        nargs="*",
-        default=DEFAULT_EXCLUDE_RECORD_TYPES,
-        help=f"Exclude these record types (default {DEFAULT_EXCLUDE_RECORD_TYPES})",
-    )
-    parser.add_argument(
-        "--message-mode",
-        choices=["auto", "summary", "full", "csv"],
-        default="auto",
-        help="Type of message to output",
-    )
-
-    args = parser.parse_args()
-
-    time_period = get_time_period(startdate=args.start, enddate=args.end)
-    message, title = create_costs_message(
-        role_arn=args.assume_role,
-        time_period=time_period,
-        cost_type=COST_TYPE,
-        granularity=args.granularity.upper(),
-        regions=None,
-        title_prefix="Command line test",
-        service_or_tag=args.tag,
-        exclude_types=args.exclude_types,
-        message_mode=args.message_mode,
-    )
-    print(title)
-    print(message)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])

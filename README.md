@@ -1,7 +1,3 @@
-# HIC AWS Management Read-Only AWS Applications
+# HIC AWS Costing Tools
 
-AWS applications running in the `hic-aws-management-ro` account.
-
-## aws-sam-msteams-costbot
-
-Microsoft Teams bot that posts a summary of daily costs
+Tools used by [Health Informatics Centre (HIC)](https://www.dundee.ac.uk/hic) to calculate AWS costs.
