@@ -24,6 +24,8 @@ def assert_2d_costs_equal(expected_costs, costs, decimal_places):
                 assert round(expected_c, decimal_places) == round(
                     costs[r][c], decimal_places
                 )
+            else:
+                assert expected_c == costs[r][c]
 
 
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
@@ -109,6 +111,42 @@ def test_costs_to_table(scenario):
         results=results,
         accounts=accounts,
         services_or_tags=services_or_tags,
+        cost_type="UnblendedCost",
+    )
+
+    assert header == expected_header
+
+    assert_2d_costs_equal(expected_costs, costs, 4)
+
+
+@pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
+def test_costs_to_flat(scenario):
+    accounts = {
+        "000000000001": "researchers-1",
+        "000000000002": "researchers-2",
+    }
+    if scenario == "dummy-services":
+        services_or_tags = {
+            dv["Value"]
+            for dv in get_test_data(scenario, "get_dimension_values-SERVICE")[
+                "DimensionValues"
+            ]
+        }
+    else:
+        services_or_tags = set(
+            f"Proj${t}" for t in get_test_data(scenario, "get_tags")["Tags"]
+        )
+    services_or_tags = sorted(services_or_tags)
+
+    expected_output = get_test_data(scenario, "test-costs_to_flat")
+    expected_header = expected_output["header"]
+    expected_costs = expected_output["costs"]
+
+    results = get_test_data(scenario, "get_cost_and_usage")["ResultsByTime"]
+
+    header, costs = aws_costs.costs_to_flat(
+        results=results,
+        accounts=accounts,
         cost_type="UnblendedCost",
     )
 
