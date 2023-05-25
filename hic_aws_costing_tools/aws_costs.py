@@ -143,7 +143,7 @@ def costs_to_flat(*, results, accounts, cost_type):
             acc_name = accounts[acc_id]
             start = result["TimePeriod"]["Start"]
             end = result["TimePeriod"]["End"]
-            cost = g["Metrics"][cost_type]["Amount"]
+            cost = float(g["Metrics"][cost_type]["Amount"])
             flat_costs.append((start, end, acc_id, acc_name, service_or_tag, cost))
 
     return header, flat_costs
