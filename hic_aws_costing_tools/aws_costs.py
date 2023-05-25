@@ -107,12 +107,16 @@ def costs_to_table(*, results, accounts, services_or_tags, cost_type):
             acc_svc_map[tuple(g["Keys"])] = g["Metrics"][cost_type]["Amount"]
 
         for acc_i, acc in enumerate(sorted(accounts.keys())):
-            if costs[acc_i][0] and costs[acc_i][0] != acc:
-                raise Exception(f"Error: {costs[acc_i][0]} != {acc}")
-            if costs[acc_i][1] and costs[acc_i][1] != accounts[acc]:
-                raise Exception(f"Error: {costs[acc_i][1]} != {accounts[acc]}")
-            costs[acc_i][0] = acc
-            costs[acc_i][1] = accounts[acc]
+            if costs[acc_i][0]:
+                if costs[acc_i][0] != acc:
+                    raise Exception(f"Error: {costs[acc_i][0]} != {acc}")
+            else:
+                costs[acc_i][0] = acc
+            if costs[acc_i][1]:
+                if costs[acc_i][1] != accounts[acc]:
+                    raise Exception(f"Error: {costs[acc_i][1]} != {accounts[acc]}")
+            else:
+                costs[acc_i][1] = accounts[acc]
             for svc_i, svc in enumerate(services_or_tags):
                 try:
                     c = float(acc_svc_map[(acc, svc)])
@@ -122,6 +126,27 @@ def costs_to_table(*, results, accounts, services_or_tags, cost_type):
                     pass
 
     return header, costs
+
+
+def costs_to_flat(*, results, accounts, cost_type):
+    # Unpivoted/flat table with columns, no aggregation is done
+    header = ["START", "END", "ACCOUNT", "ACCOUNT_NAME", "ITEM", "COST"]
+    flat_costs = []
+
+    for result in results:
+        for g in result["Groups"]:
+            if g["Metrics"][cost_type]["Unit"] != EXPECTED_UNIT:
+                raise RuntimeError(
+                    f"Unexpected unit: {g['Metrics'][cost_type]['Unit']}"
+                )
+            acc_id, service_or_tag = g["Keys"]
+            acc_name = accounts[acc_id]
+            start = result["TimePeriod"]["Start"]
+            end = result["TimePeriod"]["End"]
+            cost = g["Metrics"][cost_type]["Amount"]
+            flat_costs.append((start, end, acc_id, acc_name, service_or_tag, cost))
+
+    return header, flat_costs
 
 
 def sum_cost_table_over_accounts(header, costs):
@@ -181,17 +206,14 @@ def costs_to_csv(header, costs):
     return s.getvalue()
 
 
-def create_costs_message(
+def get_raw_cost_data(
     *,
     time_period,
-    cost_type,
     granularity,
     role_arn,
     regions,
-    title_prefix,
     service_or_tag,
     exclude_types,
-    message_mode,
 ):
     session = None
     if role_arn:
@@ -216,6 +238,29 @@ def create_costs_message(
     )
 
     required_services_or_tags = set(services_or_tags)
+    return results, accounts, services_or_tags, required_services_or_tags
+
+
+def create_costs_message(
+    *,
+    time_period,
+    cost_type,
+    granularity,
+    role_arn,
+    regions,
+    title_prefix,
+    service_or_tag,
+    exclude_types,
+    message_mode,
+):
+    results, accounts, services_or_tags, required_services_or_tags = get_raw_cost_data(
+        time_period=time_period,
+        granularity=granularity,
+        role_arn=role_arn,
+        regions=regions,
+        service_or_tag=service_or_tag,
+        exclude_types=exclude_types,
+    )
 
     header, costs = costs_to_table(
         results=results,
@@ -261,6 +306,45 @@ def create_costs_message(
         title = f"{title_prefix} {time_period['Start']} ({weekday}) {cost_type}"
 
     return message, title
+
+
+def create_costs_plain_output(
+    *,
+    time_period,
+    cost_type,
+    granularity,
+    role_arn,
+    regions,
+    service_or_tag,
+    exclude_types,
+    message_mode,
+):
+    results, accounts, services_or_tags, required_services_or_tags = get_raw_cost_data(
+        time_period=time_period,
+        granularity=granularity,
+        role_arn=role_arn,
+        regions=regions,
+        service_or_tag=service_or_tag,
+        exclude_types=exclude_types,
+    )
+
+    if message_mode == "csv":
+        header, costs = costs_to_table(
+            results=results,
+            accounts=accounts,
+            services_or_tags=sorted(required_services_or_tags),
+            cost_type=cost_type,
+        )
+    elif message_mode == "flat":
+        header, costs = costs_to_flat(
+            results=results,
+            accounts=accounts,
+            cost_type=cost_type,
+        )
+    else:
+        raise ValueError(f"Invalid message_mode for plain output: {message_mode}")
+    output = costs_to_csv(header, costs)
+    return output
 
 
 def _str_to_date(s):
