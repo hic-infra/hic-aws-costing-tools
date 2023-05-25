@@ -1,12 +1,5 @@
 {
-  "header": [
-    "START",
-    "END",
-    "ACCOUNT",
-    "ACCOUNT_NAME",
-    "ITEM",
-    "COST"
-  ],
+  "header": ["START", "END", "ACCOUNT", "ACCOUNT_NAME", "ITEM", "COST"],
   "costs": [
     [
       "2022-04-04",

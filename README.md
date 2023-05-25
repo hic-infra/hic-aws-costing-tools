@@ -27,6 +27,8 @@ aws-costs --start 2022-12-01 --end 2023-01-01 --tag Proj \
 ```
 
 Use `--message-mode csv` to get a CSV file with the costs.
+If you want to import this data into a tool like PowerBI that expects key-value inputs use `--message-mode flat`.
+
 More options:
 
 ```
