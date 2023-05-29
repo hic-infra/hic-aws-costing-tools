@@ -1,0 +1,253 @@
+{
+  "header": ["START", "END", "ACCOUNT", "ACCOUNT_NAME", "ITEM", "COST"],
+  "costs": [
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "AWS CloudTrail",
+      0.168132
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "AWS Cost Explorer",
+      0.26
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "AWS Key Management Service",
+      0.0667056672
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "Amazon AppStream",
+      2.784
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "EC2 - Other",
+      5.5336000032
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "Amazon Elastic Compute Cloud - Compute",
+      5.5416
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "Amazon Simple Notification Service",
+      0
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "Amazon Simple Queue Service",
+      0
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "Amazon Simple Storage Service",
+      0.009693558
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "Amazon Virtual Private Cloud",
+      5.2807441488
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000001",
+      "researchers-1",
+      "AmazonCloudWatch",
+      0.0179165294
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000002",
+      "researchers-2",
+      "AWS Cost Explorer",
+      0.06
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000002",
+      "researchers-2",
+      "AWS Key Management Service",
+      0.0339243336
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000002",
+      "researchers-2",
+      "EC2 - Other",
+      6.7667007129
+    ],
+    [
+      "2022-04-04",
+      "2022-04-05",
+      "000000000002",
+      "researchers-2",
+      "Amazon Elastic Compute Cloud - Compute",
+      14.3488
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "AWS CloudTrail",
+      0.234157
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "AWS Key Management Service",
+      0.0667056672
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon AppStream",
+      2.784
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon DynamoDB",
+      0
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "EC2 - Other",
+      5.5336000032
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon Elastic Compute Cloud - Compute",
+      5.5416
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon Simple Notification Service",
+      0
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon Simple Queue Service",
+      0
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon Simple Storage Service",
+      0.0127936954
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "Amazon Virtual Private Cloud",
+      5.2806572309
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000001",
+      "researchers-1",
+      "AmazonCloudWatch",
+      0.0253849341
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000002",
+      "researchers-2",
+      "AWS Cost Explorer",
+      0.02
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000002",
+      "researchers-2",
+      "AWS Key Management Service",
+      0.0921993336
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000002",
+      "researchers-2",
+      "Amazon DynamoDB",
+      0
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000002",
+      "researchers-2",
+      "EC2 - Other",
+      6.7667121124
+    ],
+    [
+      "2022-04-05",
+      "2022-04-06",
+      "000000000002",
+      "researchers-2",
+      "Amazon Elastic Compute Cloud - Compute",
+      18.1248
+    ]
+  ]
+}

@@ -5,6 +5,7 @@ from .aws_costs import (
     DEFAULT_EXCLUDE_RECORD_TYPES,
     DEFAULT_GRANULARITY,
     create_costs_message,
+    create_costs_plain_output,
     get_time_period,
 )
 
@@ -37,7 +38,7 @@ def main():
     )
     parser.add_argument(
         "--message-mode",
-        choices=["auto", "summary", "full", "csv"],
+        choices=["auto", "summary", "full", "csv", "flat"],
         default="auto",
         help="Type of message to output",
     )
@@ -45,18 +46,30 @@ def main():
     args = parser.parse_args()
 
     time_period = get_time_period(startdate=args.start, enddate=args.end)
-    message, title = create_costs_message(
-        role_arn=args.assume_role,
-        time_period=time_period,
-        cost_type=DEFAULT_COST_TYPE,
-        granularity=args.granularity.upper(),
-        regions=None,
-        title_prefix="Command line test",
-        service_or_tag=args.tag,
-        exclude_types=args.exclude_types,
-        message_mode=args.message_mode,
-    )
-    print(title)
+    if args.message_mode in ("csv", "flat"):
+        message = create_costs_plain_output(
+            role_arn=args.assume_role,
+            time_period=time_period,
+            cost_type=DEFAULT_COST_TYPE,
+            granularity=args.granularity.upper(),
+            regions=None,
+            service_or_tag=args.tag,
+            exclude_types=args.exclude_types,
+            message_mode=args.message_mode,
+        )
+    else:
+        message, title = create_costs_message(
+            role_arn=args.assume_role,
+            time_period=time_period,
+            cost_type=DEFAULT_COST_TYPE,
+            granularity=args.granularity.upper(),
+            regions=None,
+            title_prefix="Command line test",
+            service_or_tag=args.tag,
+            exclude_types=args.exclude_types,
+            message_mode=args.message_mode,
+        )
+        print(title)
     print(message)
 
 
