@@ -180,7 +180,7 @@ def format_message_summarise(header, group1, costs):
     return msg
 
 
-def format_message_all(header, costs, group1, group2):
+def format_message_all(header, costs, group1, group2, exclude_zero):
     _assert_header(header)
 
     costs_g1 = sorted(costs, key=lambda r: r[0])
@@ -190,7 +190,8 @@ def format_message_all(header, costs, group1, group2):
         m += f"## {row[0]}\n\n"
         m += f"|{group2}|Cost|\n|-|-|\n"
         for g2, cost in zip(header[1:-1], row[1:-1]):
-            m += f"|{g2}|{cost:.2f}|\n"
+            if not (exclude_zero and cost == 0):
+                m += f"|{g2}|{cost:.2f}|\n"
         m += "\n"
     return m
 
@@ -302,7 +303,7 @@ def create_costs_message(
     )
 
     summary = format_message_summarise(header, group1, costs)
-    full_costs_split = format_message_all(header, costs, group1, group2)
+    full_costs_split = format_message_all(header, costs, group1, group2, True)
 
     # Teams message length is limited, so default:
     # - If this is a single AWS account show the summary and breakdown

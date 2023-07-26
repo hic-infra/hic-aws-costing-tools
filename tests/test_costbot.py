@@ -252,8 +252,8 @@ def test_format_message_summarise(scenario):
 
 
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
-@pytest.mark.parametrize("combine_accounts", [False])
-def test_format_message_all(scenario, combine_accounts):
+@pytest.mark.parametrize("exclude_zero", [True, False])
+def test_format_message_all(scenario, exclude_zero):
     if scenario == "dummy-services":
         group2 = "Service"
     else:
@@ -262,7 +262,7 @@ def test_format_message_all(scenario, combine_accounts):
     header = test_data["header"]
     costs = test_data["costs"]
     expected_output = get_test_data(
-        scenario, f"test-format_message_all-{combine_accounts}", "md"
+        scenario, f"test-format_message_all-{exclude_zero}", "md"
     )
 
     m = aws_costs.format_message_all(
@@ -270,6 +270,7 @@ def test_format_message_all(scenario, combine_accounts):
         costs=costs,
         group1="AccountName",
         group2=group2,
+        exclude_zero=exclude_zero,
     )
     assert m == expected_output
 
