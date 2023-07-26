@@ -5,7 +5,7 @@ from io import StringIO
 import boto3
 
 DEFAULT_COST_TYPE = "UnblendedCost"
-DEFAULT_GRANULARITY = "DAILY"
+DEFAULT_GRANULARITY = "MONTHLY"
 DEFAULT_EXCLUDE_RECORD_TYPES = ["Credit", "Refund", "Tax"]
 EXPECTED_UNIT = "USD"
 
