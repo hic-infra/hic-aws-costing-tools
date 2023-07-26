@@ -195,23 +195,6 @@ def test_costs_to_table(scenario):
 
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
 def test_costs_to_flat(scenario):
-    accounts = {
-        "000000000001": "researchers-1",
-        "000000000002": "researchers-2",
-    }
-    if scenario == "dummy-services":
-        services_or_tags = {
-            dv["Value"]
-            for dv in get_test_data(scenario, "get_dimension_values-SERVICE")[
-                "DimensionValues"
-            ]
-        }
-    else:
-        services_or_tags = set(
-            f"Proj${t}" for t in get_test_data(scenario, "get_tags")["Tags"]
-        )
-    services_or_tags = sorted(services_or_tags)
-
     expected_output = get_test_data(scenario, "test-costs_to_flat")
     expected_header = expected_output["header"]
     expected_costs = expected_output["costs"]
@@ -220,7 +203,9 @@ def test_costs_to_flat(scenario):
 
     header, costs = aws_costs.costs_to_flat(
         results=results,
-        accounts=accounts,
+        # Test account numbers instead of names
+        group1="Account",
+        group2="Service",
         cost_type="UnblendedCost",
     )
 

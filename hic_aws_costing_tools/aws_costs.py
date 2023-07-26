@@ -129,9 +129,9 @@ def costs_to_table(*, results, group1, all_values1, all_values2, cost_type):
     return header, costs
 
 
-def costs_to_flat(*, results, accounts, cost_type):
+def costs_to_flat(*, results, group1, group2, cost_type):
     # Unpivoted/flat table with columns, no aggregation is done
-    header = ["START", "END", "ACCOUNT", "ACCOUNT_NAME", "ITEM", "COST"]
+    header = ["START", "END", group1, group2, "COST"]
     flat_costs = []
 
     for result in results:
@@ -140,23 +140,13 @@ def costs_to_flat(*, results, accounts, cost_type):
                 raise RuntimeError(
                     f"Unexpected unit: {g['Metrics'][cost_type]['Unit']}"
                 )
-            acc_id, service_or_tag = g["Keys"]
-            acc_name = accounts[acc_id]
+            g1, g2 = g["Keys"]
             start = result["TimePeriod"]["Start"]
             end = result["TimePeriod"]["End"]
             cost = float(g["Metrics"][cost_type]["Amount"])
-            flat_costs.append((start, end, acc_id, acc_name, service_or_tag, cost))
+            flat_costs.append((start, end, g1, g2, cost))
 
     return header, flat_costs
-
-
-# def sum_cost_table_over_accounts(header, costs):
-#     costs_sum = [0] * len(header)
-#     costs_sum[0] = costs_sum[1] = "*"
-#     for row in costs:
-#         for i, c in enumerate(row[2:]):
-#             costs_sum[i + 2] += c
-#     return [costs_sum]
 
 
 def _assert_header(header):
@@ -372,8 +362,8 @@ def create_costs_plain_output(
     elif message_mode == "flat":
         header, costs = costs_to_flat(
             results=results,
-            all_values1=all_values1,
-            all_values2=all_values2,
+            group1=group1,
+            group2=group2,
             cost_type=cost_type,
         )
     else:
