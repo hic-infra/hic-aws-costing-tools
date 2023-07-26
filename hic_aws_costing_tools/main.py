@@ -52,7 +52,7 @@ def main():
         help=f"Exclude these record types (default {DEFAULT_EXCLUDE_RECORD_TYPES})",
     )
     parser.add_argument(
-        "--message-mode",
+        "--output",
         choices=["auto", "summary", "full", "csv", "flat"],
         default="auto",
         help="Type of message to output",
@@ -61,7 +61,7 @@ def main():
     args = parser.parse_args()
 
     time_period = get_time_period(startdate=args.start, enddate=args.end)
-    if args.message_mode in ("csv", "flat"):
+    if args.output in ("csv", "flat"):
         message = create_costs_plain_output(
             role_arn=args.assume_role,
             time_period=time_period,
@@ -71,7 +71,7 @@ def main():
             group1=args.group1,
             group2=args.group2,
             exclude_types=args.exclude_types,
-            message_mode=args.message_mode,
+            output=args.output,
         )
     else:
         message, title = create_costs_message(
@@ -84,7 +84,7 @@ def main():
             group1=args.group1,
             group2=args.group2,
             exclude_types=args.exclude_types,
-            message_mode=args.message_mode,
+            output=args.output,
         )
         print(title)
     print(message)

@@ -271,7 +271,7 @@ def create_costs_message(
     group1,
     group2,
     exclude_types,
-    message_mode,
+    output,
 ):
     results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
         time_period=time_period,
@@ -299,19 +299,19 @@ def create_costs_message(
     # - If this is a single AWS account show the summary and breakdown
     # - If there are multiple AWS accounts and a tag is specified just show the tag breakdown combined over all accounts
     # - Otherwise show the AWS account costs only
-    if message_mode == "auto":
+    if output == "auto":
         if len(all_values1) == 1 or len(all_values2) == 1:
             message = summary + "\n---\n" + full_costs_split
         else:
             message = summary
-    elif message_mode == "summary":
+    elif output == "summary":
         message = summary
-    elif message_mode == "full":
+    elif output == "full":
         message = full_costs_split
-    elif message_mode == "csv":
+    elif output == "csv":
         message = costs_to_csv(header, costs)
     else:
-        raise ValueError(f"Invalid message_mode: {message_mode}")
+        raise ValueError(f"Invalid output: {output}")
 
     days = (
         datetime.fromisoformat(time_period["End"])
@@ -338,7 +338,7 @@ def create_costs_plain_output(
     group1,
     group2,
     exclude_types,
-    message_mode,
+    output,
 ):
     results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
         time_period=time_period,
@@ -351,7 +351,7 @@ def create_costs_plain_output(
         apply_value_mappings=True,
     )
 
-    if message_mode == "csv":
+    if output == "csv":
         header, costs = costs_to_table(
             results=results,
             group1=group1,
@@ -359,7 +359,7 @@ def create_costs_plain_output(
             all_values2=all_values2,
             cost_type=cost_type,
         )
-    elif message_mode == "flat":
+    elif output == "flat":
         header, costs = costs_to_flat(
             results=results,
             group1=group1,
@@ -367,7 +367,7 @@ def create_costs_plain_output(
             cost_type=cost_type,
         )
     else:
-        raise ValueError(f"Invalid message_mode for plain output: {message_mode}")
+        raise ValueError(f"Invalid output for plain output: {output}")
     output = costs_to_csv(header, costs)
     return output
 
