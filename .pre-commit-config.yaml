@@ -42,4 +42,4 @@ repos:
       - id: bandit
         entry: bandit
         exclude: ^tests/
-exclude: "^tests/dummy-.*/*.md$"
+exclude: "^tests/dummy-.*/.*.md$"
