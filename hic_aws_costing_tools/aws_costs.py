@@ -255,8 +255,8 @@ def _apply_value_mappings(*, results, all_values1, all_values2, value_map1, valu
     if value_map2:
         for result in results:
             for g in result["Groups"]:
-                g["Keys"][0] = value_map2[g["Keys"][0]]
-        all_values2 = set(value_map1[v] for v in all_values2)
+                g["Keys"][1] = value_map2[g["Keys"][1]]
+        all_values2 = set(value_map2[v] for v in all_values2)
     return results, all_values1, all_values2
 
 

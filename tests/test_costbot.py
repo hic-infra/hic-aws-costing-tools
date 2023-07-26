@@ -214,17 +214,6 @@ def test_costs_to_flat(scenario):
     assert_2d_costs_equal(expected_costs, costs, 4)
 
 
-# @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
-# def test_sum_cost_table_over_accounts(scenario):
-#     test_data = get_test_data(scenario, "test-costs_to_table")
-#     header = test_data["header"]
-#     costs = test_data["costs"]
-#     expected_sum = test_data["account_sum"]
-
-#     sum = aws_costs.sum_cost_table_over_accounts(header, costs)
-#     assert_2d_costs_equal(expected_sum, sum, 4)
-
-
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
 def test_format_message_summarise(scenario):
     test_data = get_test_data(scenario, "test-costs_to_table")
@@ -258,6 +247,48 @@ def test_format_message_all(scenario, exclude_zero):
         exclude_zero=exclude_zero,
     )
     assert m == expected_output
+
+
+def test_apply_value_mappings():
+    results_by_time = [
+        {
+            "Groups": [
+                {
+                    "Keys": ["000000000001", "Service 1"],
+                    "Metrics": {"UnblendedCost": {"Amount": "1.23", "Unit": "USD"}},
+                },
+                {
+                    "Keys": ["000000000002", "Service 2"],
+                    "Metrics": {"UnblendedCost": {"Amount": "4.56", "Unit": "USD"}},
+                },
+            ]
+        }
+    ]
+    value_map1 = {"000000000001": "Account 1", "000000000002": "Account 2"}
+    value_map2 = {"Service 1": "s.1", "Service 2": "s.2"}
+    results, all_values1, all_values2 = aws_costs._apply_value_mappings(
+        results=results_by_time,
+        all_values1=value_map1.keys(),
+        all_values2=value_map2.keys(),
+        value_map1=value_map1,
+        value_map2=value_map2,
+    )
+    assert all_values1 == set(value_map1.values())
+    assert all_values2 == set(value_map2.values())
+    assert results == [
+        {
+            "Groups": [
+                {
+                    "Keys": ["Account 1", "s.1"],
+                    "Metrics": {"UnblendedCost": {"Amount": "1.23", "Unit": "USD"}},
+                },
+                {
+                    "Keys": ["Account 2", "s.2"],
+                    "Metrics": {"UnblendedCost": {"Amount": "4.56", "Unit": "USD"}},
+                },
+            ]
+        }
+    ]
 
 
 @pytest.mark.parametrize(
