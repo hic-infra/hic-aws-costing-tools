@@ -19,7 +19,22 @@ def main():
         "--end", help="End date (YYYY-MM-DD, exclusive) (default start+1 day)"
     )
     parser.add_argument(
-        "--tag", help="Group by this tag instead of service (default service)"
+        "--group1",
+        default="accountname",
+        help=(
+            "Group by 'account', 'accountname', 'service' or 'tagname$'. "
+            "Tags are indicated by a '$' suffix. "
+            "Default accountname."
+        ),
+    )
+    parser.add_argument(
+        "--group2",
+        default="service",
+        help=(
+            "Group by 'account', 'accountname', 'service' or 'tagname$'. "
+            "Tags are indicated by a '$' suffix. "
+            "Default service."
+        ),
     )
     parser.add_argument(
         "--assume-role", help="Optionally assume this role ARN to query Cost Explorer"
@@ -53,7 +68,8 @@ def main():
             cost_type=DEFAULT_COST_TYPE,
             granularity=args.granularity.upper(),
             regions=None,
-            service_or_tag=args.tag,
+            group1=args.group1,
+            group2=args.group2,
             exclude_types=args.exclude_types,
             message_mode=args.message_mode,
         )
@@ -65,7 +81,8 @@ def main():
             granularity=args.granularity.upper(),
             regions=None,
             title_prefix="Command line test",
-            service_or_tag=args.tag,
+            group1=args.group1,
+            group2=args.group2,
             exclude_types=args.exclude_types,
             message_mode=args.message_mode,
         )

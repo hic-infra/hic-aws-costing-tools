@@ -1,7 +1,6 @@
 {
   "header": [
-    "ACCOUNT",
-    "ACCOUNT_NAME",
+    "AccountName",
     "AWS CloudTrail",
     "AWS Config",
     "AWS Cost Explorer",
@@ -38,7 +37,6 @@
   ],
   "costs": [
     [
-      "000000000001",
       "researchers-1",
       0.402289,
       0,
@@ -75,7 +73,6 @@
       39.1412904374
     ],
     [
-      "000000000002",
       "researchers-2",
       0,
       0,
@@ -114,7 +111,6 @@
   ],
   "account_sum": [
     [
-      "*",
       "*",
       0.402289,
       0,

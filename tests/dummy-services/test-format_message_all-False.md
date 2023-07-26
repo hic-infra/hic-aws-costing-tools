@@ -1,6 +1,6 @@
-## researchers-1 000000000001
+## researchers-1
 
-|Proj|Cost|
+|Service|Cost|
 |-|-|
 |AWS CloudTrail|0.40|
 |AWS Config|0.00|
@@ -35,9 +35,9 @@
 |CloudWatch Events|0.00|
 |EC2 - Other|11.07|
 
-## researchers-2 000000000002
+## researchers-2
 
-|EC2 - Other|Cost|
+|Service|Cost|
 |-|-|
 |AWS CloudTrail|0.00|
 |AWS Config|0.00|
