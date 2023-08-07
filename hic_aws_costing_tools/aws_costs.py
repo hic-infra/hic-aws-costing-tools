@@ -5,58 +5,64 @@ from io import StringIO
 import boto3
 
 DEFAULT_COST_TYPE = "UnblendedCost"
-DEFAULT_GRANULARITY = "DAILY"
+DEFAULT_GRANULARITY = "MONTHLY"
 DEFAULT_EXCLUDE_RECORD_TYPES = ["Credit", "Refund", "Tax"]
 EXPECTED_UNIT = "USD"
 
 
+def _get_group_by(ce, time_period, dimension):
+    """
+    Get the group by query for the given dimension
+    :return (group by query, all values for the dimension, optional mapping of values to display names)
+    """
+    value_map = {}
+    if dimension[-1] == "$":
+        dim = dimension[:-1]
+        group_by = {"Type": "TAG", "Key": dim}
+        r = ce.get_tags(TimePeriod=time_period, TagKey=dim)
+        all_values = set(f"{dim}${t}" for t in r["Tags"])
+        return group_by, all_values, value_map
+
+    dim = dimension.upper()
+    if dim in ("ACCOUNT", "ACCOUNTNAME"):
+        group_by = {"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"}
+        r = ce.get_dimension_values(TimePeriod=time_period, Dimension="LINKED_ACCOUNT")
+        all_values = set(dv["Value"] for dv in r["DimensionValues"])
+        if dim == "ACCOUNTNAME":
+            value_map = dict(
+                (dv["Value"], dv["Attributes"]["description"])
+                for dv in r["DimensionValues"]
+            )
+        return group_by, all_values, value_map
+
+    if dim == "SERVICE":
+        group_by = {"Type": "DIMENSION", "Key": dim}
+        r = ce.get_dimension_values(TimePeriod=time_period, Dimension=dim)
+        all_values = set(dv["Value"] for dv in r["DimensionValues"])
+        return group_by, all_values, value_map
+
+    raise ValueError(f"Invalid dimension: {dimension}")
+
+
 def costs_for_regions(
-    *, time_period, granularity, regions, session, service_or_tag, exclude_types
+    *, time_period, granularity, regions, session, group1, group2, exclude_types
 ):
     if session:
         ce = session.client("ce")
     else:
         ce = boto3.client("ce")
 
-    r = ce.get_dimension_values(TimePeriod=time_period, Dimension="LINKED_ACCOUNT")
-    all_linked_accounts = dict(
-        (dv["Value"], dv["Attributes"]["description"]) for dv in r["DimensionValues"]
-    )
-
-    if service_or_tag:
-        r = ce.get_tags(TimePeriod=time_period, TagKey=service_or_tag)
-        all_services_or_tags = set(f"{service_or_tag}${t}" for t in r["Tags"])
-    else:
-        r = ce.get_dimension_values(TimePeriod=time_period, Dimension="SERVICE")
-        all_services_or_tags = set(dv["Value"] for dv in r["DimensionValues"])
+    group_by1, all_values1, value_map1 = _get_group_by(ce, time_period, group1)
+    group_by2, all_values2, value_map2 = _get_group_by(ce, time_period, group2)
 
     r = None
     results = []
     kwargs = dict(
         Granularity=granularity,
-        GroupBy=[
-            {
-                "Type": "DIMENSION",
-                "Key": "LINKED_ACCOUNT",
-            },
-        ],
+        GroupBy=[group_by1, group_by2],
         Metrics=["UnblendedCost"],
         TimePeriod=time_period,
     )
-    if service_or_tag:
-        kwargs["GroupBy"].append(
-            {
-                "Type": "TAG",
-                "Key": service_or_tag,
-            }
-        )
-    else:
-        kwargs["GroupBy"].append(
-            {
-                "Type": "DIMENSION",
-                "Key": "SERVICE",
-            }
-        )
 
     exclude_record_types = dict(
         Not=dict(
@@ -86,51 +92,46 @@ def costs_for_regions(
         r = ce.get_cost_and_usage(**kwargs)
         results.extend(r["ResultsByTime"])
 
-    return results, all_linked_accounts, all_services_or_tags
+    return results, all_values1, all_values2, value_map1, value_map2
 
 
-def costs_to_table(*, results, accounts, services_or_tags, cost_type):
-    # results will have one group per day
-    # print(json.dumps(results, indent=2, sort_keys=True))
+def costs_to_table(*, results, group1, all_values1, all_values2, cost_type):
+    # results will have one group per day/month
+    all_values2_sorted = sorted(all_values2)
 
-    header = ["ACCOUNT", "ACCOUNT_NAME"] + services_or_tags + ["TOTAL"]
-    costs = [[0] * len(header) for _ in range(len(accounts))]
+    header = [group1] + all_values2_sorted + ["TOTAL"]
+    costs = [[0] * len(header) for _ in range(len(all_values1))]
 
     for result in results:
-        acc_svc_map = {}
+        g1_g2_map = {}
         for g in result["Groups"]:
-            # [account, service-or-tag]
+            # [group1, group2]
             if g["Metrics"][cost_type]["Unit"] != EXPECTED_UNIT:
                 raise RuntimeError(
                     f"Unexpected unit: {g['Metrics'][cost_type]['Unit']}"
                 )
-            acc_svc_map[tuple(g["Keys"])] = g["Metrics"][cost_type]["Amount"]
+            g1_g2_map[tuple(g["Keys"])] = g["Metrics"][cost_type]["Amount"]
 
-        for acc_i, acc in enumerate(sorted(accounts.keys())):
-            if costs[acc_i][0]:
-                if costs[acc_i][0] != acc:
-                    raise Exception(f"Error: {costs[acc_i][0]} != {acc}")
+        for g1_i, g1 in enumerate(sorted(all_values1)):
+            if costs[g1_i][0]:
+                if costs[g1_i][0] != g1:
+                    raise Exception(f"Error: {costs[g1_i][0]} != {g1}")
             else:
-                costs[acc_i][0] = acc
-            if costs[acc_i][1]:
-                if costs[acc_i][1] != accounts[acc]:
-                    raise Exception(f"Error: {costs[acc_i][1]} != {accounts[acc]}")
-            else:
-                costs[acc_i][1] = accounts[acc]
-            for svc_i, svc in enumerate(services_or_tags):
+                costs[g1_i][0] = g1
+            for g2_i, g2 in enumerate(all_values2_sorted):
                 try:
-                    c = float(acc_svc_map[(acc, svc)])
-                    costs[acc_i][svc_i + 2] += c
-                    costs[acc_i][-1] += c
+                    c = float(g1_g2_map[(g1, g2)])
+                    costs[g1_i][g2_i + 1] += c
+                    costs[g1_i][-1] += c
                 except KeyError:
                     pass
 
     return header, costs
 
 
-def costs_to_flat(*, results, accounts, cost_type):
+def costs_to_flat(*, results, group1, group2, cost_type):
     # Unpivoted/flat table with columns, no aggregation is done
-    header = ["START", "END", "ACCOUNT", "ACCOUNT_NAME", "ITEM", "COST"]
+    header = ["START", "END", group1, group2, "COST"]
     flat_costs = []
 
     for result in results:
@@ -139,31 +140,21 @@ def costs_to_flat(*, results, accounts, cost_type):
                 raise RuntimeError(
                     f"Unexpected unit: {g['Metrics'][cost_type]['Unit']}"
                 )
-            acc_id, service_or_tag = g["Keys"]
-            acc_name = accounts[acc_id]
+            g1, g2 = g["Keys"]
             start = result["TimePeriod"]["Start"]
             end = result["TimePeriod"]["End"]
             cost = float(g["Metrics"][cost_type]["Amount"])
-            flat_costs.append((start, end, acc_id, acc_name, service_or_tag, cost))
+            flat_costs.append((start, end, g1, g2, cost))
 
     return header, flat_costs
 
 
-def sum_cost_table_over_accounts(header, costs):
-    costs_sum = [0] * len(header)
-    costs_sum[0] = costs_sum[1] = "*"
-    for row in costs:
-        for i, c in enumerate(row[2:]):
-            costs_sum[i + 2] += c
-    return [costs_sum]
-
-
 def _assert_header(header):
-    if header[1] != "ACCOUNT_NAME" or header[-1] != "TOTAL":
+    if header[-1] != "TOTAL":
         raise RuntimeError(f"Unexpected header: {header}")
 
 
-def format_message_summarise(header, costs):
+def format_message_summarise(header, group1, costs):
     _assert_header(header)
     costs_dsc = sorted(costs, key=lambda r: r[-1], reverse=True)
 
@@ -171,29 +162,26 @@ def format_message_summarise(header, costs):
     md_rows = ""
     for row in costs_dsc:
         sum_total += row[-1]
-        md_rows += f"|{row[1]}|{row[-1]:.2f}|\n"
+        md_rows += f"|{row[0]}|{row[-1]:.2f}|\n"
     msg = (
-        f"## Account Totals: {EXPECTED_UNIT} {sum_total:.2f}\n\n"
-        f"|Account|Total|\n|-|-|\n{md_rows}"
+        f"## Totals: {EXPECTED_UNIT} {sum_total:.2f}\n\n"
+        f"|{group1}|Total|\n|-|-|\n{md_rows}"
     )
     return msg
 
 
-def format_message_all(header, costs, service_or_tag, combine_accounts):
+def format_message_all(header, costs, group1, group2, exclude_zero):
     _assert_header(header)
 
-    if combine_accounts:
-        costs_acc = sum_cost_table_over_accounts(header, costs)
-    else:
-        # Order by account name
-        costs_acc = sorted(costs, key=lambda r: r[1])
+    costs_g1 = sorted(costs, key=lambda r: r[0])
 
     m = ""
-    for row in costs_acc:
-        m += f"## {row[1]} {row[0]}\n\n"
-        m += f"|{service_or_tag or 'Service'}|Cost|\n|-|-|\n"
-        for service_or_tag, cost in zip(header[2:-1], row[2:-1]):
-            m += f"|{service_or_tag}|{cost:.2f}|\n"
+    for row in costs_g1:
+        m += f"## {row[0]}\n\n"
+        m += f"|{group2}|Cost|\n|-|-|\n"
+        for g2, cost in zip(header[1:-1], row[1:-1]):
+            if not (exclude_zero and cost == 0):
+                m += f"|{g2}|{cost:.2f}|\n"
         m += "\n"
     return m
 
@@ -212,8 +200,10 @@ def get_raw_cost_data(
     granularity,
     role_arn,
     regions,
-    service_or_tag,
+    group1,
+    group2,
     exclude_types,
+    apply_value_mappings,
 ):
     session = None
     if role_arn:
@@ -228,17 +218,46 @@ def get_raw_cost_data(
             aws_session_token=credentials["SessionToken"],
         )
 
-    results, accounts, services_or_tags = costs_for_regions(
+    results, all_values1, all_values2, value_map1, value_map2 = costs_for_regions(
         time_period=time_period,
         granularity=granularity,
         session=session,
         regions=regions,
-        service_or_tag=service_or_tag,
+        group1=group1,
+        group2=group2,
         exclude_types=exclude_types,
     )
 
-    required_services_or_tags = set(services_or_tags)
-    return results, accounts, services_or_tags, required_services_or_tags
+    if apply_value_mappings:
+        results, all_values1, all_values2 = _apply_value_mappings(
+            results=results,
+            all_values1=all_values1,
+            all_values2=all_values2,
+            value_map1=value_map1,
+            value_map2=value_map2,
+        )
+
+    return results, all_values1, all_values2, value_map1, value_map2
+
+
+def _apply_value_mappings(*, results, all_values1, all_values2, value_map1, value_map2):
+    """
+    Apply value mappings to raw data
+
+    This is mostly for accountname.
+    The raw data will have the account number, so replace it with the account name (description).
+    """
+    if value_map1:
+        for result in results:
+            for g in result["Groups"]:
+                g["Keys"][0] = value_map1[g["Keys"][0]]
+        all_values1 = set(value_map1[v] for v in all_values1)
+    if value_map2:
+        for result in results:
+            for g in result["Groups"]:
+                g["Keys"][1] = value_map2[g["Keys"][1]]
+        all_values2 = set(value_map2[v] for v in all_values2)
+    return results, all_values1, all_values2
 
 
 def create_costs_message(
@@ -249,49 +268,50 @@ def create_costs_message(
     role_arn,
     regions,
     title_prefix,
-    service_or_tag,
+    group1,
+    group2,
     exclude_types,
-    message_mode,
+    output,
 ):
-    results, accounts, services_or_tags, required_services_or_tags = get_raw_cost_data(
+    results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
         time_period=time_period,
         granularity=granularity,
         role_arn=role_arn,
         regions=regions,
-        service_or_tag=service_or_tag,
+        group1=group1,
+        group2=group2,
         exclude_types=exclude_types,
+        apply_value_mappings=True,
     )
 
     header, costs = costs_to_table(
         results=results,
-        accounts=accounts,
-        services_or_tags=sorted(required_services_or_tags),
+        group1=group1,
+        all_values1=all_values1,
+        all_values2=all_values2,
         cost_type=cost_type,
     )
 
-    summary = format_message_summarise(header, costs)
-    full_costs_split_acc = format_message_all(header, costs, service_or_tag, False)
-    full_costs_sum_acc = format_message_all(header, costs, service_or_tag, True)
+    summary = format_message_summarise(header, group1, costs)
+    full_costs_split = format_message_all(header, costs, group1, group2, True)
 
     # Teams message length is limited, so default:
     # - If this is a single AWS account show the summary and breakdown
     # - If there are multiple AWS accounts and a tag is specified just show the tag breakdown combined over all accounts
     # - Otherwise show the AWS account costs only
-    if message_mode == "auto":
-        if len(accounts) == 1:
-            message = summary + "\n---\n" + full_costs_split_acc
-        elif service_or_tag:
-            message = full_costs_sum_acc
+    if output == "auto":
+        if len(all_values1) == 1 or len(all_values2) == 1:
+            message = summary + "\n---\n" + full_costs_split
         else:
             message = summary
-    elif message_mode == "summary":
+    elif output == "summary":
         message = summary
-    elif message_mode == "full":
-        message = full_costs_split_acc
-    elif message_mode == "csv":
+    elif output == "full":
+        message = full_costs_split
+    elif output == "csv":
         message = costs_to_csv(header, costs)
     else:
-        raise ValueError(f"Invalid message_mode: {message_mode}")
+        raise ValueError(f"Invalid output: {output}")
 
     days = (
         datetime.fromisoformat(time_period["End"])
@@ -315,34 +335,39 @@ def create_costs_plain_output(
     granularity,
     role_arn,
     regions,
-    service_or_tag,
+    group1,
+    group2,
     exclude_types,
-    message_mode,
+    output,
 ):
-    results, accounts, services_or_tags, required_services_or_tags = get_raw_cost_data(
+    results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
         time_period=time_period,
         granularity=granularity,
         role_arn=role_arn,
         regions=regions,
-        service_or_tag=service_or_tag,
+        group1=group1,
+        group2=group2,
         exclude_types=exclude_types,
+        apply_value_mappings=True,
     )
 
-    if message_mode == "csv":
+    if output == "csv":
         header, costs = costs_to_table(
             results=results,
-            accounts=accounts,
-            services_or_tags=sorted(required_services_or_tags),
+            group1=group1,
+            all_values1=all_values1,
+            all_values2=all_values2,
             cost_type=cost_type,
         )
-    elif message_mode == "flat":
+    elif output == "flat":
         header, costs = costs_to_flat(
             results=results,
-            accounts=accounts,
+            group1=group1,
+            group2=group2,
             cost_type=cost_type,
         )
     else:
-        raise ValueError(f"Invalid message_mode for plain output: {message_mode}")
+        raise ValueError(f"Invalid output for plain output: {output}")
     output = costs_to_csv(header, costs)
     return output
 

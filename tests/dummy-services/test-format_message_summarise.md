@@ -1,6 +1,6 @@
-## Account Totals: USD 85.35
+## Totals: USD 85.36
 
-|Account|Total|
+|AccountName|Total|
 |-|-|
 |researchers-2|46.21|
 |researchers-1|39.14|

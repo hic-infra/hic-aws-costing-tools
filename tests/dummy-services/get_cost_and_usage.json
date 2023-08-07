@@ -240,7 +240,7 @@
           "Keys": ["000000000001", "Amazon Simple Queue Service"],
           "Metrics": {
             "UnblendedCost": {
-              "Amount": "0",
+              "Amount": "0.001",
               "Unit": "USD"
             }
           }
