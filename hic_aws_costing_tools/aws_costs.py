@@ -12,7 +12,7 @@ DEFAULT_EXCLUDE_RECORD_TYPES = [
     "Tax",
     # These two aren't documented on
     # https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html#cost-categories-terms
-    # Waiting for confirmation from AWS Support that it's OK to use these
+    # but were confirmed in AWS Support ticket 171570162800825
     "Enterprise Discount Program Discount",
     "Solution Provider Program Discount",
 ]
