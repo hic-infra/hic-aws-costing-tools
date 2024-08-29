@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 - 2024-08-29
+
+### Breaking
+
+- Include `Usage` type only, instead of excluding types [#7](https://github.com/hic-infra/hic-aws-costing-tools/pull/7).
+
 ## 0.2.0 - 2024-06-18
 
 ### Breaking
