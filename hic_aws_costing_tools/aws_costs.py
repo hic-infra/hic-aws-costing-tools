@@ -16,6 +16,7 @@ DEFAULT_EXCLUDE_RECORD_TYPES = [
     "Enterprise Discount Program Discount",
     "Solution Provider Program Discount",
 ]
+DEFAULT_INCLUDE_RECORD_TYPES = []
 EXPECTED_UNIT = "USD"
 
 
@@ -53,8 +54,62 @@ def _get_group_by(ce, time_period, dimension):
     raise ValueError(f"Invalid dimension: {dimension}")
 
 
+def _get_filter(regions, exclude_types, include_types):
+    filter_count = 0
+    region_filter = None
+    exclude_filter = None
+    include_filter = None
+    filter = None
+
+    if regions:
+        filter_count += 1
+        region_filter = dict(
+            Dimensions={
+                "Key": "REGION",
+                "Values": regions,
+            }
+        )
+    if exclude_types:
+        filter_count += 1
+        exclude_filter = dict(
+            Not=dict(
+                Dimensions={
+                    "Key": "RECORD_TYPE",
+                    "Values": exclude_types,
+                }
+            )
+        )
+    if include_types:
+        filter_count += 1
+        include_filter = dict(
+            Dimensions={
+                "Key": "RECORD_TYPE",
+                "Values": include_types,
+            }
+        )
+
+    if filter_count > 1:
+        filter = dict(And=[])
+    for f in [region_filter, exclude_filter, include_filter]:
+        if f:
+            if filter:
+                filter["And"].append(f)
+            else:
+                filter = f
+
+    return filter
+
+
 def costs_for_regions(
-    *, time_period, granularity, regions, session, group1, group2, exclude_types
+    *,
+    time_period,
+    granularity,
+    regions,
+    session,
+    group1,
+    group2,
+    exclude_types,
+    include_types,
 ):
     if session:
         ce = session.client("ce")
@@ -73,28 +128,9 @@ def costs_for_regions(
         TimePeriod=time_period,
     )
 
-    exclude_record_types = dict(
-        Not=dict(
-            Dimensions={
-                "Key": "RECORD_TYPE",
-                "Values": exclude_types,
-            }
-        )
-    )
-    if regions:
-        kwargs["Filter"] = dict(
-            And=[
-                exclude_record_types,
-                dict(
-                    Dimensions={
-                        "Key": "REGION",
-                        "Values": regions,
-                    }
-                ),
-            ]
-        )
-    else:
-        kwargs["Filter"] = exclude_record_types
+    filter = _get_filter(regions, exclude_types, include_types)
+    if filter:
+        kwargs["Filter"] = filter
 
     while not r or "NextPageToken" in r:
         # print(f"get_cost_and_usage({kwargs})")
@@ -212,6 +248,7 @@ def get_raw_cost_data(
     group1,
     group2,
     exclude_types,
+    include_types,
     apply_value_mappings,
 ):
     session = None
@@ -235,6 +272,7 @@ def get_raw_cost_data(
         group1=group1,
         group2=group2,
         exclude_types=exclude_types,
+        include_types=include_types,
     )
 
     if apply_value_mappings:
@@ -280,6 +318,7 @@ def create_costs_message(
     group1,
     group2,
     exclude_types,
+    include_types,
     output,
 ):
     results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
@@ -290,6 +329,7 @@ def create_costs_message(
         group1=group1,
         group2=group2,
         exclude_types=exclude_types,
+        include_types=include_types,
         apply_value_mappings=True,
     )
 
@@ -347,6 +387,7 @@ def create_costs_plain_output(
     group1,
     group2,
     exclude_types,
+    include_types,
     output,
 ):
     results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
@@ -357,6 +398,7 @@ def create_costs_plain_output(
         group1=group1,
         group2=group2,
         exclude_types=exclude_types,
+        include_types=include_types,
         apply_value_mappings=True,
     )
 

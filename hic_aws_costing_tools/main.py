@@ -4,6 +4,7 @@ from .aws_costs import (
     DEFAULT_COST_TYPE,
     DEFAULT_EXCLUDE_RECORD_TYPES,
     DEFAULT_GRANULARITY,
+    DEFAULT_INCLUDE_RECORD_TYPES,
     create_costs_message,
     create_costs_plain_output,
     get_time_period,
@@ -52,6 +53,12 @@ def main():
         help=f"Exclude these record types (default {DEFAULT_EXCLUDE_RECORD_TYPES})",
     )
     parser.add_argument(
+        "--include-types",
+        nargs="*",
+        default=DEFAULT_INCLUDE_RECORD_TYPES,
+        help=f"Include these record types (default {DEFAULT_INCLUDE_RECORD_TYPES})",
+    )
+    parser.add_argument(
         "--output",
         choices=["auto", "summary", "full", "csv", "flat"],
         default="auto",
@@ -71,6 +78,7 @@ def main():
             group1=args.group1,
             group2=args.group2,
             exclude_types=args.exclude_types,
+            include_types=args.include_types,
             output=args.output,
         )
     else:
@@ -84,6 +92,7 @@ def main():
             group1=args.group1,
             group2=args.group2,
             exclude_types=args.exclude_types,
+            include_types=args.include_types,
             output=args.output,
         )
         print(title)

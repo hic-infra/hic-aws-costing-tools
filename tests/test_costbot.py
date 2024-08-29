@@ -85,6 +85,91 @@ def test_get_group_by(mocker, dimension):
     assert value_map == expected_value_map
 
 
+@pytest.mark.parametrize(
+    "regions,exclude,include,expected",
+    [
+        (["mars"], [], [], {"Dimensions": {"Key": "REGION", "Values": ["mars"]}}),
+        (
+            [],
+            ["exclude"],
+            [],
+            {"Not": {"Dimensions": {"Key": "RECORD_TYPE", "Values": ["exclude"]}}},
+        ),
+        (
+            [],
+            [],
+            ["include"],
+            {"Dimensions": {"Key": "RECORD_TYPE", "Values": ["include"]}},
+        ),
+        (
+            ["mars"],
+            ["exclude"],
+            [],
+            {
+                "And": [
+                    {"Dimensions": {"Key": "REGION", "Values": ["mars"]}},
+                    {
+                        "Not": {
+                            "Dimensions": {"Key": "RECORD_TYPE", "Values": ["exclude"]}
+                        }
+                    },
+                ]
+            },
+        ),
+        (
+            ["mars", "jupiter"],
+            [],
+            ["include", "i2"],
+            {
+                "And": [
+                    {"Dimensions": {"Key": "REGION", "Values": ["mars", "jupiter"]}},
+                    {"Dimensions": {"Key": "RECORD_TYPE", "Values": ["include", "i2"]}},
+                ]
+            },
+        ),
+        (
+            [],
+            ["exclude", "e2"],
+            ["include"],
+            {
+                "And": [
+                    {
+                        "Not": {
+                            "Dimensions": {
+                                "Key": "RECORD_TYPE",
+                                "Values": ["exclude", "e2"],
+                            }
+                        }
+                    },
+                    {"Dimensions": {"Key": "RECORD_TYPE", "Values": ["include"]}},
+                ]
+            },
+        ),
+        (
+            ["mars", "jupiter"],
+            ["exclude", "e2"],
+            ["include", "i2"],
+            {
+                "And": [
+                    {"Dimensions": {"Key": "REGION", "Values": ["mars", "jupiter"]}},
+                    {
+                        "Not": {
+                            "Dimensions": {
+                                "Key": "RECORD_TYPE",
+                                "Values": ["exclude", "e2"],
+                            }
+                        }
+                    },
+                    {"Dimensions": {"Key": "RECORD_TYPE", "Values": ["include", "i2"]}},
+                ]
+            },
+        ),
+    ],
+)
+def test_get_filter(regions, exclude, include, expected):
+    assert aws_costs._get_filter(regions, exclude, include) == expected
+
+
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
 def test_costs_for_regions(mocker, scenario):
     group1 = "accountname"
@@ -134,6 +219,7 @@ def test_costs_for_regions(mocker, scenario):
         group1=group1,
         group2=group2,
         exclude_types=["Credit", "Refund"],
+        include_types=[],
     )
 
     assert all_values1 == {"000000000001", "000000000002"}
