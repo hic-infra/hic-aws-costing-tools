@@ -6,17 +6,19 @@ import boto3
 
 DEFAULT_COST_TYPE = "UnblendedCost"
 DEFAULT_GRANULARITY = "MONTHLY"
+# Previously we excluded these types by default. Now we just include Usage instead.
 DEFAULT_EXCLUDE_RECORD_TYPES = [
-    "Credit",
-    "Refund",
-    "Tax",
-    # These two aren't documented on
-    # https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html#cost-categories-terms
-    # but were confirmed in AWS Support ticket 171570162800825
-    "Enterprise Discount Program Discount",
-    "Solution Provider Program Discount",
+    # "Credit",
+    # "Refund",
+    # "Tax",
+    # # These two aren't documented on
+    # # https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html#cost-categories-terms
+    # # but were confirmed in AWS Support ticket 171570162800825
+    # "Enterprise Discount Program Discount",
+    # "Solution Provider Program Discount",
 ]
-DEFAULT_INCLUDE_RECORD_TYPES = []
+# https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/manage-cost-categories.html#cost-categories-terms
+DEFAULT_INCLUDE_RECORD_TYPES = ["Usage"]
 EXPECTED_UNIT = "USD"
 
 
