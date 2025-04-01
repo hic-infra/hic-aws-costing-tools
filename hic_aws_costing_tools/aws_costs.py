@@ -36,6 +36,7 @@ def _get_group_by(ce, time_period, dimension):
         return group_by, all_values, value_map
 
     dim = dimension.upper()
+
     if dim in ("ACCOUNT", "ACCOUNTNAME"):
         group_by = {"Type": "DIMENSION", "Key": "LINKED_ACCOUNT"}
         r = ce.get_dimension_values(TimePeriod=time_period, Dimension="LINKED_ACCOUNT")
@@ -47,13 +48,11 @@ def _get_group_by(ce, time_period, dimension):
             )
         return group_by, all_values, value_map
 
-    if dim == "SERVICE":
+    else:
         group_by = {"Type": "DIMENSION", "Key": dim}
         r = ce.get_dimension_values(TimePeriod=time_period, Dimension=dim)
         all_values = set(dv["Value"] for dv in r["DimensionValues"])
         return group_by, all_values, value_map
-
-    raise ValueError(f"Invalid dimension: {dimension}")
 
 
 def _get_filter(regions, exclude_types, include_types):
@@ -201,7 +200,13 @@ def _assert_header(header):
         raise RuntimeError(f"Unexpected header: {header}")
 
 
-def format_message_summarise(header, group1, costs):
+def _assert_output(output):
+    if output not in ("md", "html"):
+        raise ValueError(f"Invalid output type: {output}")
+
+
+def format_message_summarise(header, group1, costs, output_format="md"):
+    _assert_output(output_format)
     _assert_header(header)
     costs_dsc = sorted(costs, key=lambda r: r[-1], reverse=True)
 
@@ -209,27 +214,52 @@ def format_message_summarise(header, group1, costs):
     md_rows = ""
     for row in costs_dsc:
         sum_total += row[-1]
-        md_rows += f"|{row[0]}|{row[-1]:.2f}|\n"
-    msg = (
-        f"## Totals: {EXPECTED_UNIT} {sum_total:.2f}\n\n"
-        f"|{group1}|Total|\n|-|-|\n{md_rows}"
-    )
+        if output_format == "md":
+            r = f"|{row[0]}|{row[-1]:.2f}|\n"
+        else:
+            r = f"<tr><td>{row[0]}</td><td>{row[-1]:.2f}</td></tr>\n"
+        md_rows += r
+    if output_format == "md":
+        msg = (
+            f"## Totals: {EXPECTED_UNIT} {sum_total:.2f}\n\n"
+            f"|{group1}|Total|\n|-|-|\n{md_rows}"
+        )
+    else:
+        msg = (
+            f"<h2>Totals: {EXPECTED_UNIT} {sum_total:.2f}</h2>\n"
+            "<table>\n"
+            f"<tr><th>{group1}</th><th>Total</th></tr>\n"
+            f"{md_rows}"
+            "</table>\n"
+        )
     return msg
 
 
-def format_message_all(header, costs, group1, group2, exclude_zero):
+def format_message_all(header, costs, group1, group2, exclude_zero, output_format="md"):
+    _assert_output(output_format)
     _assert_header(header)
 
     costs_g1 = sorted(costs, key=lambda r: r[0])
 
     m = ""
     for row in costs_g1:
-        m += f"## {row[0]}\n\n"
-        m += f"|{group2}|Cost|\n|-|-|\n"
+        if output_format == "md":
+            m += f"## {row[0]}\n\n"
+            m += f"|{group2}|Cost|\n|-|-|\n"
+        else:
+            m += f"<h2>{row[0]}</h2>\n"
+            m += "<table>\n"
+            m += f"<tr><th>{group2}</th><th>Cost</th></tr>\n"
         for g2, cost in zip(header[1:-1], row[1:-1]):
             if not (exclude_zero and cost == 0):
-                m += f"|{g2}|{cost:.2f}|\n"
-        m += "\n"
+                if output_format == "md":
+                    m += f"|{g2}|{cost:.2f}|\n"
+                else:
+                    m += f"<tr><td>{g2}</td><td>{cost:.2f}</td></tr>\n"
+        if output_format == "md":
+            m += "\n"
+        else:
+            m += "</table>\n"
     return m
 
 
@@ -322,6 +352,7 @@ def create_costs_message(
     exclude_types,
     include_types,
     output,
+    output_format,
 ):
     results, all_values1, all_values2, value_map1, value_map2 = get_raw_cost_data(
         time_period=time_period,
@@ -343,8 +374,8 @@ def create_costs_message(
         cost_type=cost_type,
     )
 
-    summary = format_message_summarise(header, group1, costs)
-    full_costs_split = format_message_all(header, costs, group1, group2, True)
+    summary = format_message_summarise(header, group1, costs, output_format)
+    full_costs_split = format_message_all(header, costs, group1, group2, output_format)
 
     # Teams message length is limited, so default:
     # - If this is a single AWS account show the summary and breakdown

@@ -300,20 +300,24 @@ def test_costs_to_flat(scenario):
     assert_2d_costs_equal(expected_costs, costs, 4)
 
 
+@pytest.mark.parametrize("output_format", ["html", "md"])
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
-def test_format_message_summarise(scenario):
+def test_format_message_summarise(scenario, output_format):
     test_data = get_test_data(scenario, "test-costs_to_table")
     header = test_data["header"]
     costs = test_data["costs"]
-    expected_output = get_test_data(scenario, "test-format_message_summarise", "md")
+    expected_output = get_test_data(
+        scenario, "test-format_message_summarise", output_format
+    )
 
-    m = aws_costs.format_message_summarise(header, "AccountName", costs)
+    m = aws_costs.format_message_summarise(header, "AccountName", costs, output_format)
     assert m == expected_output
 
 
+@pytest.mark.parametrize("output_format", ["html", "md"])
 @pytest.mark.parametrize("scenario", ["dummy-services", "dummy-proj"])
 @pytest.mark.parametrize("exclude_zero", [True, False])
-def test_format_message_all(scenario, exclude_zero):
+def test_format_message_all(scenario, exclude_zero, output_format):
     if scenario == "dummy-services":
         group2 = "Service"
     else:
@@ -322,7 +326,7 @@ def test_format_message_all(scenario, exclude_zero):
     header = test_data["header"]
     costs = test_data["costs"]
     expected_output = get_test_data(
-        scenario, f"test-format_message_all-{exclude_zero}", "md"
+        scenario, f"test-format_message_all-{exclude_zero}", output_format
     )
 
     m = aws_costs.format_message_all(
@@ -331,6 +335,7 @@ def test_format_message_all(scenario, exclude_zero):
         group1="AccountName",
         group2=group2,
         exclude_zero=exclude_zero,
+        output_format=output_format,
     )
     assert m == expected_output
 
